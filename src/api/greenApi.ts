@@ -1,4 +1,3 @@
-// src/api/greenApi.ts
 import { type INotification } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.green-api.com';
@@ -32,21 +31,18 @@ export const receiveNotification = async (
   apiTokenInstance: string
 ): Promise<INotification | null> => {
   try {
-    // receiveTimeout=5 (по умолчанию 5 секунд, как в доке)
     const url = `${BASE_URL}/waInstance${idInstance}/receiveNotification/${apiTokenInstance}?receiveTimeout=5`;
     
     const response = await fetch(url);
     
-    // 1. Штатный таймаут (сообщений нет)
     if (response.status === 204 || response.status === 408) {
       return null;
     }
 
-    // 2. Критическая ошибка: включен Webhook
     if (response.status === 400) {
       const errorData = await response.json().catch(() => ({}));
       if (errorData.message?.includes('webhook url is set')) {
-        console.error('🚨 ОШИБКА: Зайдите в кабинет Green-API и очистите поле "Webhook URL"!');
+        console.warn('🚨 ОШИБКА: Зайдите в кабинет Green-API и очистите поле "Webhook URL"!');
       }
       return null;
     }
@@ -55,7 +51,6 @@ export const receiveNotification = async (
       return null;
     }
     
-    // 3. Успешный ответ (используем text(), чтобы избежать ошибки парсинга пустого ответа)
     const text = await response.text();
     if (!text || text.trim() === '') {
       return null;
@@ -73,12 +68,10 @@ export const deleteNotification = async (
   receiptId: number
 ) => {
   try {
-    // 🔥 ВАЖНО: receiptId передается В URL, а не в body, согласно документации!
     const url = `${BASE_URL}/waInstance${idInstance}/deleteNotification/${apiTokenInstance}/${receiptId}`;
     
     const response = await fetch(url, {
       method: 'DELETE',
-      // Body здесь НЕ нужен
     });
 
     if (!response.ok) {

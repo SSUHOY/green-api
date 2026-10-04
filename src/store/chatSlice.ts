@@ -39,9 +39,9 @@ export const chatSlice = createSlice({
       state.messages = [];
       state.chatCreatedAt = Date.now();
     },
-    addOptimisticMessage: (state, action: PayloadAction<{ text: string }>) => {
+    addOptimisticMessage: (state, action: PayloadAction<{ id: string, text: string }>) => {
       const newMessage: IMessage = {
-        id: `temp-${Date.now()}`,
+        id: action.payload.id,
         text: action.payload.text,
         timestamp: Date.now(),
         type: "outgoing",

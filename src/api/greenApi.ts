@@ -83,3 +83,24 @@ export const deleteNotification = async (
     console.error('Ошибка при удалении уведомления:', err);
   }
 };
+
+export const clearNotificationQueue = async (
+  idInstance: string,
+  apiTokenInstance: string
+): Promise<number> => {
+  let clearedCount = 0;
+  let hasNotifications = true;
+
+  while (hasNotifications) {
+    const notification = await receiveNotification(idInstance, apiTokenInstance);
+
+    if (notification && notification.receiptId) {
+      await deleteNotification(idInstance, apiTokenInstance, notification.receiptId);
+      clearedCount++;
+    } else {
+      hasNotifications = false;
+    }
+  }
+
+  return clearedCount;
+};

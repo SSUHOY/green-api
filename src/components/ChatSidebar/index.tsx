@@ -1,19 +1,26 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState, AppDispatch } from "../../store";
-import { setChatId, setError } from "../../store/chatSlice";
+import { setChatId, setError, setLoading } from "../../store/chatSlice";
+import { clearNotificationQueue } from "../../api/greenApi";
 import "./styles.css";
 
 export const ChatSidebar: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { currentChatId, apiTokenInstance, idInstance } = useSelector(
-    (state: RootState) => state.chat,
-  );
+  const { currentChatId, apiTokenInstance, idInstance, isLoading, error } =
+    useSelector((state: RootState) => state.chat);
   const [phoneInput, setPhoneInput] = useState("");
 
   const hasCredentials = Boolean(idInstance && apiTokenInstance);
 
-  const handleStartChat = () => {
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPhoneInput(e.target.value);
+    if (error) {
+      dispatch(setError(""));
+    }
+  };
+
+  const handleStartChat = async () => {
     if (!hasCredentials) {
       dispatch(
         setError("Сначала введите ID Instance и API Token в настройках сверху"),
@@ -26,7 +33,17 @@ export const ChatSidebar: React.FC = () => {
       return;
     }
 
-    dispatch(setChatId(phoneInput));
+    dispatch(setLoading(true));
+
+    try {
+      await clearNotificationQueue(idInstance, apiTokenInstance);
+      dispatch(setChatId(phoneInput));
+    } catch (err) {
+      console.error("Ошибка при очистке очереди:", err);
+      dispatch(setError("Не удалось подготовить чат. Проверьте соединение."));
+    } finally {
+      dispatch(setLoading(false));
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -43,15 +60,16 @@ export const ChatSidebar: React.FC = () => {
           type="tel"
           placeholder="Номер телефона (79991234567)"
           value={phoneInput}
-          onChange={(e) => setPhoneInput(e.target.value)}
+          onChange={handlePhoneChange}
           onKeyDown={handleKeyDown}
-          disabled={!hasCredentials}
+          disabled={!hasCredentials || isLoading}
         />
         <button
           onClick={handleStartChat}
-          disabled={!hasCredentials}
-          className={!hasCredentials ? "btn-disabled" : ""}>
-          Начать чат
+          disabled={!hasCredentials || isLoading}
+          className={(!hasCredentials || isLoading) ? "btn-disabled" : ""}
+        >
+          {isLoading ? "Подготовка чата..." : "Начать чат"}
         </button>
       </div>
 

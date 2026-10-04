@@ -66,3 +66,13 @@
 .save-btn:active {
   background: #0055bb;
 }
+
+.btn-disabled {
+  background: #cccccc !important;
+  cursor: not-allowed !important;
+  color: #666 !important;
+}
+
+.btn-disabled:hover {
+  background: #cccccc !important;
+}

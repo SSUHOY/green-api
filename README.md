@@ -31,8 +31,7 @@
 
 ### 1. Клонирование репозитория
 bash
-git clone https://github.com/your-username/green-api-chat.git
-cd green-api-chat
+git clone https://github.com/SSUHOY/green-api.git
 
 ### 2. Установка зависимостей
 npm install

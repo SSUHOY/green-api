@@ -3,24 +3,24 @@ export interface IMessage {
   text: string;
   timestamp: number;
   type: 'incoming' | 'outgoing';
-  status?: 'sent' | 'pending' | 'error'; // Для оптимистичного UI
+  status?: 'pending' | 'sent' | 'error'; 
 }
 
 export interface IChatState {
   idInstance: string;
   apiTokenInstance: string;
-  currentChatId: string | null; // Например, "79991234567@c.us"
+  currentChatId: string | null;
   messages: IMessage[];
   isLoading: boolean;
   error: string | null;
-  isPolling: boolean; // Флаг, запущен ли опрос сообщений
+  isPolling: boolean;
+  chatCreatedAt: number | null;
 }
 
-// Тип ответа от Green-API при получении уведомлений
 export interface INotification {
   receiptId: number;
   body: {
-    typeWebhook: string; // 'incomingMessageReceived'
+    typeWebhook: string;
     instanceData: {
       idInstance: number;
       wid: string;
@@ -32,9 +32,10 @@ export interface INotification {
       chatId: string;
       sender: string;
       senderName: string;
+      senderPhoneNumber: number;
     };
     messageData: {
-      typeMessage: string; // 'textMessage'
+      typeMessage: string;
       textMessageData: {
         textMessage: string;
       };

@@ -1,16 +1,26 @@
-// src/hooks/useChatPolling.ts
-import { useEffect, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { receiveNotification, deleteNotification } from '../api/greenApi';
-import { addIncomingMessage, setPolling } from '../store/chatSlice';
-import type { RootState } from '../store';
+import { useEffect, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { receiveNotification, deleteNotification } from "../api/greenApi";
+import { addIncomingMessage, setPolling } from "../store/chatSlice";
+import type { RootState } from "../store";
+
+const normalizePhone = (phone: string | number | undefined): string => {
+  if (!phone) return "";
+
+  let digits = String(phone).replace(/\D/g, "");
+
+  if (digits.startsWith("8") && digits.length === 11) {
+    digits = "7" + digits.slice(1);
+  }
+
+  return digits;
+};
 
 export const useChatPolling = () => {
   const dispatch = useDispatch();
-  const { idInstance, apiTokenInstance, currentChatId } = useSelector(
-    (state: RootState) => state.chat
-  );
-  
+  const { idInstance, apiTokenInstance, currentChatId, chatCreatedAt } =
+    useSelector((state: RootState) => state.chat);
+
   const isPollingRef = useRef(false);
 
   useEffect(() => {
@@ -22,52 +32,61 @@ export const useChatPolling = () => {
 
     dispatch(setPolling(true));
     isPollingRef.current = true;
-    console.log('🟢 Опрос запущен. Ждем сообщения для чата:', currentChatId);
-    
+
     const poll = async () => {
       while (isPollingRef.current) {
         try {
-          const notification = await receiveNotification(idInstance, apiTokenInstance);
-          
+          const notification = await receiveNotification(
+            idInstance,
+            apiTokenInstance,
+          );
+
           if (!isPollingRef.current) break;
 
           if (notification && notification.receiptId) {
-            console.log('📦 Получено уведомление, receiptId:', notification.receiptId);
 
-            if (notification.body.typeWebhook === 'incomingMessageReceived') {
+            if (notification.body.typeWebhook === "incomingMessageReceived") {
               const msgData = notification.body.messageData;
-              console.log(msgData, 'test msgData')
-              const senderChatId = notification.body.senderData.chatId;
-              
-              const cleanSenderNumber = senderChatId.replace(/\D/g, '');
-              const cleanTargetNumber = currentChatId.replace(/\D/g, '');
 
-              console.log(`📥 От: ${cleanSenderNumber} | 🎯 Ожидаем: ${cleanTargetNumber}`);
+              const incomingRawChatId = notification.body.senderData.senderPhoneNumber;
+              const messageTimestamp = notification.body.timestamp * 1000;
 
-              if (msgData?.typeMessage === 'textMessage') {
-                console.log('✅ Сообщение добавлено в чат!');
-                dispatch(addIncomingMessage({
-                  id: notification.body.idMessage,
-                  text: msgData.textMessageData.textMessage,
-                  timestamp: notification.body.timestamp * 1000,
-                  type: 'incoming',
-                }));
+              const normalizedIncoming = normalizePhone(incomingRawChatId);
+              const normalizedCurrent = normalizePhone(currentChatId);
+
+              const isCorrectChat = normalizedIncoming === normalizedCurrent;
+              const isTextMessage = msgData?.typeMessage === "textMessage";
+              const isAfterCreation = chatCreatedAt
+                ? messageTimestamp > chatCreatedAt
+                : true;
+
+              if (isCorrectChat && isTextMessage && isAfterCreation) {
+                dispatch(
+                  addIncomingMessage({
+                    id: notification.body.idMessage,
+                    text: msgData.textMessageData.textMessage,
+                    timestamp: messageTimestamp,
+                    type: "incoming",
+                  }),
+                );
               } else {
-                console.log('🚫 Сообщение проигнорировано (не тот чат или не текст)');
+                console.warn(
+                  "🚫 Сообщение отфильтровано (не тот чат, не текст или старое)",
+                );
               }
             }
 
-            // 🔥 ТЕПЕРЬ ЭТО СРАБОТАЕТ: удаляем по ID из URL
-            console.log('🗑️ Удаляем уведомление из очереди...');
-            await deleteNotification(idInstance, apiTokenInstance, notification.receiptId);
+            await deleteNotification(
+              idInstance,
+              apiTokenInstance,
+              notification.receiptId,
+            );
           }
-          
-          // Пауза 1 секунда перед следующим запросом
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
+
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         } catch (err) {
-          console.error('🔴 Неожиданная ошибка в цикле опроса:', err);
-          await new Promise(resolve => setTimeout(resolve, 3000));
+          console.error("🔴 Неожиданная ошибка в цикле опроса:", err);
+          await new Promise((resolve) => setTimeout(resolve, 3000));
         }
       }
     };
@@ -78,5 +97,5 @@ export const useChatPolling = () => {
       isPollingRef.current = false;
       dispatch(setPolling(false));
     };
-  }, [idInstance, apiTokenInstance, currentChatId, dispatch]);
+  }, [idInstance, apiTokenInstance, currentChatId, dispatch, chatCreatedAt]);
 };

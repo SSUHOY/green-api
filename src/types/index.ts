@@ -3,7 +3,7 @@ export interface IMessage {
   text: string;
   timestamp: number;
   type: 'incoming' | 'outgoing';
-  status?:  "sent" | "delivered" | "read" | "error" | "pending"; 
+  status?: 'pending' | 'sent' | 'error'; 
 }
 
 export interface IChatState {
@@ -15,7 +15,6 @@ export interface IChatState {
   error: string | null;
   isPolling: boolean;
   chatCreatedAt: number | null;
-  selectedChatId: number | null;
 }
 
 export interface INotification {

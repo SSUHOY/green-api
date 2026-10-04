@@ -19,20 +19,16 @@ export const MessageList: React.FC = () => {
     });
   };
 
-  const getStatusIcon = (status?: string) => {
+ const getStatusIcon = (status?: 'pending' | 'sent' | 'error') => {
     switch (status) {
-      case "pending":
-        return "⏳";
-      case "sent":
-        return "✓";
-      case "delivered":
-        return "✓✓";
-      case "read":
-        return "✓✓";
-      case "error":
-        return "❌";
+      case 'pending':
+        return '⏳';
+      case 'sent':
+        return '✓';
+      case 'error':
+        return '❌';
       default:
-        return "";
+        return '';
     }
   };
 

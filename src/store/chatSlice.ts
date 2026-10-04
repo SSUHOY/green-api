@@ -10,7 +10,6 @@ const initialState: IChatState = {
   error: null,
   isPolling: false,
   chatCreatedAt: null,
-  selectedChatId: null,
 };
 
 export const chatSlice = createSlice({
@@ -54,11 +53,13 @@ export const chatSlice = createSlice({
       state,
       action: PayloadAction<{
         id: string;
-        status: "sent" | "delivered" | "read" | "error";
+        status: "pending" | "sent" | "error";
       }>,
     ) => {
       const msg = state.messages.find((m) => m.id === action.payload.id);
-      if (msg) msg.status = action.payload.status;
+      if (msg) {
+        msg.status = action.payload.status;
+      }
     },
     addIncomingMessage: (state, action: PayloadAction<IMessage>) => {
       state.messages = [...state.messages, action.payload];
@@ -72,9 +73,6 @@ export const chatSlice = createSlice({
     },
     setPolling: (state, action: PayloadAction<boolean>) => {
       state.isPolling = action.payload;
-    },
-    setCurrentChat: (state, action: PayloadAction<number>) => {
-      state.selectedChatId = action.payload;
     },
   },
 });

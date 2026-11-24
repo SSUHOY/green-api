@@ -1,7 +1,6 @@
 # MAX / Telegram Chat на React + Green-API
 
 Веб-интерфейс чата для отправки и получения текстовых сообщений через GREEN-API.  
-Разработан в рамках тестового задания на позицию **Frontend Developer (React)**.
 
 🔗 **Живая демонстрация:** [https://green-api-deploy.netlify.app](https://green-api-deploy.netlify.app)  
 🎥 **Видео-демо работы приложения:** [Ссылка на Loom / скринкаст](https://www.loom.com/share/4a4755eb94ec4efda366b363c7c3fa88)
